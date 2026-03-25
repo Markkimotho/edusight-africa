@@ -1,0 +1,165 @@
+{
+  "model_name": "RandomForest",
+  "model_path": "/Users/ktinega/Documents/last-version-of-the-project/ml/models/xgb_model.pkl",
+  "scaler_path": "/Users/ktinega/Documents/last-version-of-the-project/ml/models/scaler.pkl",
+  "feature_names": [
+    "math_score",
+    "reading_score",
+    "writing_score",
+    "attendance_pct",
+    "behavior_rating",
+    "literacy_level",
+    "home_engagement_composite",
+    "score_trend",
+    "grade_level",
+    "age",
+    "score_gap",
+    "avg_academic",
+    "academic_behavior_mismatch",
+    "school_type_community",
+    "school_type_private",
+    "school_type_public",
+    "gender_female",
+    "gender_male"
+  ],
+  "n_features": 18,
+  "n_classes": 4,
+  "risk_label_map": {
+    "0": "low",
+    "1": "medium",
+    "2": "high",
+    "3": "critical"
+  },
+  "training_samples": 8000,
+  "test_samples": 2000,
+  "test_metrics": {
+    "accuracy": 0.814,
+    "macro_f1": 0.571,
+    "auc_roc_ovr": 0.9418,
+    "confusion_matrix": [
+      [
+        376,
+        156,
+        0,
+        0
+      ],
+      [
+        88,
+        1122,
+        53,
+        0
+      ],
+      [
+        0,
+        72,
+        130,
+        0
+      ],
+      [
+        0,
+        0,
+        3,
+        0
+      ]
+    ]
+  },
+  "cv_results": {
+    "cv_macro_f1_mean": 0.5581,
+    "cv_macro_f1_std": 0.0073,
+    "cv_scores": [
+      0.5586,
+      0.5524,
+      0.5478,
+      0.5676,
+      0.5641
+    ]
+  },
+  "xgb_metrics": {
+    "accuracy": 0.8175,
+    "macro_f1": 0.5615,
+    "auc_roc_ovr": 0.9437,
+    "confusion_matrix": [
+      [
+        378,
+        154,
+        0,
+        0
+      ],
+      [
+        76,
+        1149,
+        38,
+        0
+      ],
+      [
+        0,
+        94,
+        108,
+        0
+      ],
+      [
+        0,
+        0,
+        3,
+        0
+      ]
+    ]
+  },
+  "xgb_cv": {
+    "cv_macro_f1_mean": 0.557,
+    "cv_macro_f1_std": 0.0075,
+    "cv_scores": [
+      0.5559,
+      0.5501,
+      0.567,
+      0.5642,
+      0.548
+    ]
+  },
+  "rf_metrics": {
+    "accuracy": 0.814,
+    "macro_f1": 0.571,
+    "auc_roc_ovr": 0.9418,
+    "confusion_matrix": [
+      [
+        376,
+        156,
+        0,
+        0
+      ],
+      [
+        88,
+        1122,
+        53,
+        0
+      ],
+      [
+        0,
+        72,
+        130,
+        0
+      ],
+      [
+        0,
+        0,
+        3,
+        0
+      ]
+    ]
+  },
+  "rf_cv": {
+    "cv_macro_f1_mean": 0.5581,
+    "cv_macro_f1_std": 0.0073,
+    "cv_scores": [
+      0.5586,
+      0.5524,
+      0.5478,
+      0.5676,
+      0.5641
+    ]
+  },
+  "training_duration_seconds": 11.12,
+  "random_state": 42,
+  "sklearn_version": "1.8.0",
+  "xgboost_version": "3.2.0"
+}

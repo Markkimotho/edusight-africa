@@ -1,4 +1,109 @@
-venv/
+# Python
 __pycache__/
-.streamlit/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
+
+# Data files (sensitive)
+data/users.json
+data/student_data.json
+data/parent_observations.json
+
+# Regional data (backup)
+data/*/backup/
+data/regional_backups/
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env.local
+.env.development
+.env.staging
+.env.production
+
+# Regional deployment configs
+deployment/*/secrets.yaml
+deployment/*/config.prod.yaml
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# Regional cache
+cache/
+regional_cache/
+
+# Model files (large)
+*.pkl.backup
+models/backup/
+
+# Keep specs directory
+!specs/
+
+# ── New project structure ────────────────────────────────────────────────────
+
+# Frontend build artefacts
+frontend/.next/
+frontend/node_modules/
+
+# Backend Python cache / virtual environments
+backend/__pycache__/
+backend/.venv/
+backend/venv/
+
+# ML artefacts — large binary files, do not commit
+ml/models/*.pkl
+ml/data/synthetic/*.csv
+
+# Environment variable files (contain secrets)
+.env
+.env.local
+.env.*.local
+EduSight_Africa_Portfolio.pdf
+scripts/generate_portfolio_pdf.py
