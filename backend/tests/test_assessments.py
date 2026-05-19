@@ -68,7 +68,11 @@ async def test_create_assessment_generates_prediction(
     assert pred["risk_level"] in ("low", "medium", "high", "critical")
     assert 0.0 <= pred["risk_probability"] <= 1.0
     assert isinstance(pred["feature_contributions"], dict)
-    assert pred["model_version"] == "rule-based-v1.0"
+    assert pred["model_version"]
+    assert pred["feature_contributions"]["method"] in ("trained_model", "rule_based_fallback")
+    assert isinstance(pred["feature_contributions"]["risk_drivers"], list)
+    assert isinstance(pred["feature_contributions"]["recommended_actions"], list)
+    assert pred["feature_contributions"]["intervention_priority"] in ("routine", "watch", "urgent")
 
 
 @pytest.mark.asyncio
@@ -94,6 +98,8 @@ async def test_create_assessment_low_scores_high_risk(
     assert resp.status_code == 201
     pred = resp.json()["prediction"]
     assert pred["risk_level"] in ("high", "critical")
+    assert pred["feature_contributions"]["intervention_priority"] == "urgent"
+    assert pred["feature_contributions"]["recommended_actions"]
 
 
 @pytest.mark.asyncio

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "EduSight Africa API"
     APP_VERSION: str = "1.0.0"
-    ENVIRONMENT: Literal["development", "staging", "production"] = "development"
+    ENVIRONMENT: Literal["development", "staging", "production", "test"] = "development"
     DEBUG: bool = True
 
     # Database
@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     # Pagination
     DEFAULT_PAGE_SIZE: int = 20
     MAX_PAGE_SIZE: int = 100
+
+    # ML serving
+    ML_MODEL_PATH: str = "ml/models/xgb_model.pkl"
+    ML_SCALER_PATH: str = "ml/models/scaler.pkl"
+    ML_METADATA_PATH: str = "ml/models/model_metadata.json"
+    ML_ENABLE_TRAINED_MODEL: bool = False
 
 
 @lru_cache()
