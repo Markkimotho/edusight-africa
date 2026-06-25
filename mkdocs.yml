@@ -1,0 +1,35 @@
+site_name: EduSight Africa - AI Student Risk Assessment Platform
+site_url: https://markkimotho.github.io/edusight-africa/
+repo_url: https://github.com/Markkimotho/edusight-africa
+repo_name: Markkimotho/edusight-africa
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: { icon: material/weather-night, name: Switch to dark mode }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: { icon: material/weather-sunny, name: Switch to light mode }
+  features:
+    - navigation.top
+    - content.code.copy
+    - toc.follow
+
+nav:
+  - Home: index.md
+  - GUIDE: GUIDE.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search

@@ -107,3 +107,5 @@ ml/data/synthetic/*.csv
 .env.*.local
 EduSight_Africa_Portfolio.pdf
 scripts/generate_portfolio_pdf.py
+
+_site/
