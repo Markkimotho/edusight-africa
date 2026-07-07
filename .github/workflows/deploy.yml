@@ -12,6 +12,10 @@ jobs:
   deploy:
     name: Build, push images & deploy
     runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
 
     steps:
       # ── 1. Source ────────────────────────────────────────────────────────
@@ -22,12 +26,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # ── 3. Authenticate with Docker Hub ──────────────────────────────────
+      # ── 3. Authenticate with Docker Hub when credentials are configured ──
+      - name: Check Docker Hub configuration
+        id: dockerhub
+        run: |
+          namespace="${DOCKERHUB_NAMESPACE:-$DOCKERHUB_USERNAME}"
+
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "namespace=$namespace" >> "$GITHUB_OUTPUT"
+            echo "Docker Hub push is enabled."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "namespace=edusight-local" >> "$GITHUB_OUTPUT"
+            echo "Docker Hub secrets are not configured; images will be built but not pushed."
+          fi
+
       - name: Log in to Docker Hub
+        if: steps.dockerhub.outputs.enabled == 'true'
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
 
       # ── 4. Build & push backend image ────────────────────────────────────
       - name: Build and push backend image
@@ -35,10 +55,10 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile
-          push: true
+          push: ${{ steps.dockerhub.outputs.enabled == 'true' }}
           tags: |
-            edusight/backend:latest
-            edusight/backend:${{ github.sha }}
+            ${{ steps.dockerhub.outputs.namespace }}/edusight-backend:latest
+            ${{ steps.dockerhub.outputs.namespace }}/edusight-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -48,10 +68,10 @@ jobs:
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
-          push: true
+          push: ${{ steps.dockerhub.outputs.enabled == 'true' }}
           tags: |
-            edusight/frontend:latest
-            edusight/frontend:${{ github.sha }}
+            ${{ steps.dockerhub.outputs.namespace }}/edusight-frontend:latest
+            ${{ steps.dockerhub.outputs.namespace }}/edusight-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -62,24 +82,26 @@ jobs:
       # Replace the echo commands below with your actual deployment mechanism
       # (e.g. appleboy/ssh-action, Ansible, kubectl rollout, etc.)
       - name: Deploy to production server
+        if: steps.dockerhub.outputs.enabled == 'true'
         env:
           IMAGE_TAG: ${{ github.sha }}
+          IMAGE_NAMESPACE: ${{ steps.dockerhub.outputs.namespace }}
         run: |
           echo "=== EduSight Africa — Production Deployment ==="
           echo ""
           echo "Images pushed:"
-          echo "  edusight/backend:${IMAGE_TAG}"
-          echo "  edusight/frontend:${IMAGE_TAG}"
+          echo "  ${IMAGE_NAMESPACE}/edusight-backend:${IMAGE_TAG}"
+          echo "  ${IMAGE_NAMESPACE}/edusight-frontend:${IMAGE_TAG}"
           echo ""
           echo "Commands to run on the production server:"
           echo ""
           echo "  # Pull updated images"
-          echo "  docker pull edusight/backend:${IMAGE_TAG}"
-          echo "  docker pull edusight/frontend:${IMAGE_TAG}"
+          echo "  docker pull ${IMAGE_NAMESPACE}/edusight-backend:${IMAGE_TAG}"
+          echo "  docker pull ${IMAGE_NAMESPACE}/edusight-frontend:${IMAGE_TAG}"
           echo ""
           echo "  # Tag as latest locally"
-          echo "  docker tag edusight/backend:${IMAGE_TAG} edusight/backend:latest"
-          echo "  docker tag edusight/frontend:${IMAGE_TAG} edusight/frontend:latest"
+          echo "  docker tag ${IMAGE_NAMESPACE}/edusight-backend:${IMAGE_TAG} ${IMAGE_NAMESPACE}/edusight-backend:latest"
+          echo "  docker tag ${IMAGE_NAMESPACE}/edusight-frontend:${IMAGE_TAG} ${IMAGE_NAMESPACE}/edusight-frontend:latest"
           echo ""
           echo "  # Restart services (zero-downtime)"
           echo "  docker compose -f /opt/edusight/docker-compose.yml pull"
@@ -90,8 +112,16 @@ jobs:
           echo ""
           echo "=== Deployment script complete ==="
 
+      - name: Skip production deploy
+        if: steps.dockerhub.outputs.enabled != 'true'
+        run: |
+          echo "Docker Hub credentials are not configured."
+          echo "The workflow built both images, but skipped pushing and deployment."
+          echo "Add DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets to enable image publishing."
+
       # ── 7. Post-deploy health check (placeholder) ─────────────────────────
       - name: Post-deployment health check
+        if: steps.dockerhub.outputs.enabled == 'true'
         run: |
           echo "Health check placeholder."
           echo "Replace with: curl --fail https://api.edusight.africa/health"
