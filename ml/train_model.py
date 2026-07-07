@@ -28,6 +28,7 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
+    classification_report,
     confusion_matrix,
     f1_score,
     roc_auc_score,
@@ -150,6 +151,14 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.ndarray) 
         "macro_f1": round(float(macro_f1), 4),
         "auc_roc_ovr": round(float(auc), 4),
         "confusion_matrix": cm.tolist(),
+        "classification_report": classification_report(
+            y_true,
+            y_pred,
+            labels=list(range(N_CLASSES)),
+            target_names=[RISK_LABEL_MAP[i] for i in range(N_CLASSES)],
+            zero_division=0,
+            output_dict=True,
+        ),
     }
 
 
@@ -161,6 +170,44 @@ def cross_validate_model(estimator, X_train: np.ndarray, y_train: np.ndarray) ->
         "cv_macro_f1_std": round(float(scores.std()), 4),
         "cv_scores": [round(float(s), 4) for s in scores],
     }
+
+
+def compute_group_fairness(
+    df_test: pd.DataFrame,
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    group_columns: list[str],
+) -> dict:
+    """
+    Compute lightweight subgroup metrics for governance.
+
+    These metrics are not used to rank students; they tell admins where a model
+    needs more validation before being trusted across contexts.
+    """
+    results: dict[str, dict] = {}
+    for column in group_columns:
+        if column not in df_test.columns:
+            continue
+        groups: dict[str, dict] = {}
+        for value in sorted(df_test[column].dropna().unique()):
+            mask = df_test[column].to_numpy() == value
+            if int(mask.sum()) < 20:
+                continue
+            groups[str(value)] = {
+                "samples": int(mask.sum()),
+                "macro_f1": round(float(f1_score(y_true[mask], y_pred[mask], average="macro", zero_division=0)), 4),
+                "high_priority_recall": _high_priority_recall(y_true[mask], y_pred[mask]),
+            }
+        results[column] = groups
+    return results
+
+
+def _high_priority_recall(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    high_true = np.isin(y_true, [2, 3])
+    if int(high_true.sum()) == 0:
+        return 0.0
+    high_pred = np.isin(y_pred, [2, 3])
+    return round(float((high_true & high_pred).sum() / high_true.sum()), 4)
 
 
 # ---------------------------------------------------------------------------
@@ -185,8 +232,8 @@ def train() -> None:
     X_scaled = scaler.fit_transform(X)
 
     # 4. Stratified train/test split 80/20
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y, test_size=0.20, stratify=y, random_state=42
+    X_train, X_test, y_train, y_test, df_train, df_test = train_test_split(
+        X_scaled, y, df, test_size=0.20, stratify=y, random_state=42
     )
     print(f"Train size: {len(X_train):,}  |  Test size: {len(X_test):,}\n")
 
@@ -245,11 +292,13 @@ def train() -> None:
         best_name = "XGBoost"
         best_metrics = xgb_metrics
         best_cv = xgb_cv_results
+        best_pred = y_pred_xgb
     else:
         best_model = rf_calibrated
         best_name = "RandomForest"
         best_metrics = rf_metrics
         best_cv = rf_cv_results
+        best_pred = y_pred_rf
 
     print(f"Best model: {best_name} (macro-F1 = {best_metrics['macro_f1']:.4f})")
 
@@ -265,8 +314,33 @@ def train() -> None:
     # 8. Save metadata
     # -----------------------------------------------------------------------
     elapsed = round(time.time() - start_time, 2)
+    fairness_metrics = compute_group_fairness(
+        df_test=df_test,
+        y_true=y_test,
+        y_pred=best_pred,
+        group_columns=["country", "region", "school_type", "gender", "grade_level"],
+    )
+    deployment_gate = {
+        "passed": bool(
+            best_metrics["macro_f1"] >= 0.55
+            and best_metrics["auc_roc_ovr"] >= 0.85
+            and _high_priority_recall(y_test, best_pred) >= 0.55
+        ),
+        "criteria": {
+            "macro_f1_min": 0.55,
+            "auc_roc_ovr_min": 0.85,
+            "high_priority_recall_min": 0.55,
+        },
+        "observed": {
+            "macro_f1": best_metrics["macro_f1"],
+            "auc_roc_ovr": best_metrics["auc_roc_ovr"],
+            "high_priority_recall": _high_priority_recall(y_test, best_pred),
+        },
+    }
     metadata = {
         "model_name": best_name,
+        "model_family": "classical_ml_calibrated_classifier",
+        "problem_type": "student_support_priority_multiclass",
         "model_path": str(XGB_MODEL_PATH),
         "scaler_path": str(SCALER_PATH),
         "feature_names": feature_names,
@@ -276,12 +350,15 @@ def train() -> None:
         "training_samples": int(len(X_train)),
         "test_samples": int(len(X_test)),
         "test_metrics": best_metrics,
+        "fairness_metrics": fairness_metrics,
+        "deployment_gate": deployment_gate,
         "cv_results": best_cv,
         "xgb_metrics": xgb_metrics,
         "xgb_cv": xgb_cv_results,
         "rf_metrics": rf_metrics,
         "rf_cv": rf_cv_results,
         "training_duration_seconds": elapsed,
+        "trained_at_unix": int(time.time()),
         "random_state": 42,
         "sklearn_version": __import__("sklearn").__version__,
         "xgboost_version": __import__("xgboost").__version__,

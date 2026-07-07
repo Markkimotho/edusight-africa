@@ -73,11 +73,17 @@ class PredictionResult:
         risk_probability: float,
         feature_contributions: dict[str, Any],
         model_version: str,
+        confidence: str | None = None,
+        data_completeness: float | None = None,
+        feature_snapshot: dict[str, Any] | None = None,
     ) -> None:
         self.risk_level = risk_level
         self.risk_probability = risk_probability
         self.feature_contributions = feature_contributions
         self.model_version = model_version
+        self.confidence = confidence or confidence_from_probability(risk_probability)
+        self.data_completeness = data_completeness
+        self.feature_snapshot = feature_snapshot or {}
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -85,6 +91,9 @@ class PredictionResult:
             "risk_probability": self.risk_probability,
             "feature_contributions": self.feature_contributions,
             "model_version": self.model_version,
+            "confidence": self.confidence,
+            "data_completeness": self.data_completeness,
+            "feature_snapshot": self.feature_snapshot,
         }
 
 
@@ -104,6 +113,7 @@ class RuleBasedPredictor:
         risk_prob, contributions = compute_weighted_score(normalised)
         risk_level = _risk_level_from_probability(risk_prob)
         explanation = build_practical_guidance(assessment_data, risk_level, risk_prob)
+        completeness = estimate_data_completeness(assessment_data)
 
         logger.debug(
             "Rule-based prediction: probability=%.4f level=%s",
@@ -120,6 +130,9 @@ class RuleBasedPredictor:
                 **explanation,
             },
             model_version=self.version,
+            confidence=confidence_from_probability(risk_prob, completeness),
+            data_completeness=completeness,
+            feature_snapshot={key: assessment_data.get(key) for key in sorted(assessment_data)},
         )
 
 
@@ -146,6 +159,7 @@ class TrainedModelPredictor:
         risk_level = RISK_LABEL_MAP.get(predicted_class, "medium")
         risk_probability = float(probabilities[predicted_class])
         explanation = build_practical_guidance(assessment_data, risk_level, risk_probability)
+        completeness = estimate_data_completeness(assessment_data)
 
         logger.debug(
             "Trained-model prediction: probability=%.4f level=%s version=%s",
@@ -169,6 +183,9 @@ class TrainedModelPredictor:
                 **explanation,
             },
             model_version=self.version,
+            confidence=confidence_from_probability(risk_probability, completeness),
+            data_completeness=completeness,
+            feature_snapshot=engineered,
         )
 
 
@@ -204,6 +221,56 @@ def _load_trained_predictor() -> TrainedModelPredictor | None:
     except Exception as exc:
         logger.warning("Could not load trained risk model; using fallback: %s", exc)
         return None
+
+
+def estimate_data_completeness(data: dict[str, Any]) -> float:
+    expected = [
+        "math_score",
+        "reading_score",
+        "writing_score",
+        "attendance_pct",
+        "behavior_rating",
+        "literacy_level",
+        "grade_level",
+        "age",
+    ]
+    present = sum(1 for key in expected if data.get(key) is not None)
+    return round(present / len(expected), 4)
+
+
+def missing_data_warnings(data: dict[str, Any]) -> list[dict[str, str]]:
+    required = {
+        "grade_level": "Add the learner's grade/class.",
+        "age": "Add age or date-of-birth-derived age.",
+        "gender": "Add gender only where policy and consent allow it.",
+        "attendance_pct": "Add recent attendance or attendance percentage.",
+        "behavior_rating": "Add at least one teacher observation or behavior rating.",
+    }
+    academic_present = any(data.get(key) is not None for key in ("math_score", "reading_score", "writing_score"))
+    warnings = [
+        {"feature": key, "recommendation": recommendation}
+        for key, recommendation in required.items()
+        if data.get(key) is None
+    ]
+    if not academic_present:
+        warnings.append(
+            {
+                "feature": "academic_score",
+                "recommendation": "Add at least one recent academic score or curriculum competency result.",
+            }
+        )
+    return warnings
+
+
+def confidence_from_probability(probability: float, data_completeness: float | None = None) -> str:
+    completeness = 1.0 if data_completeness is None else data_completeness
+    distance_from_boundary = abs((probability % 0.25) - 0.125) / 0.125
+    score = (0.65 * completeness) + (0.35 * distance_from_boundary)
+    if score >= 0.72:
+        return "high"
+    if score >= 0.45:
+        return "medium"
+    return "low"
 
 
 def _num(data: dict[str, Any], key: str, default: float) -> float:
@@ -353,6 +420,11 @@ def build_practical_guidance(
         "risk_drivers": drivers[:4],
         "recommended_actions": [driver["recommendation"] for driver in drivers[:3]],
         "intervention_priority": priority,
+        "missing_data_warnings": missing_data_warnings(assessment_data),
+        "fairness_caution": (
+            "Review local context and avoid using sensitive characteristics as the reason "
+            "for intervention. This signal is for support planning only."
+        ),
         "explanation": (
             "This is a decision-support signal for educators, not a final judgment "
             "about the learner. Review local context before acting."
@@ -385,3 +457,15 @@ def predict_from_assessment(assessment_data: dict[str, Any]) -> PredictionResult
         contribution breakdown.
     """
     return get_predictor().predict(assessment_data)
+
+
+def get_model_info() -> dict[str, Any]:
+    predictor = get_predictor()
+    metadata = getattr(predictor, "metadata", {}) or {}
+    return {
+        "version": predictor.version,
+        "method": metadata.get("model_name", "rule_based_fallback"),
+        "trained_model_enabled": isinstance(predictor, TrainedModelPredictor),
+        "feature_names": metadata.get("feature_names", MODEL_FEATURE_COLUMNS),
+        "metadata": metadata,
+    }

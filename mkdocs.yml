@@ -21,6 +21,8 @@ theme:
 nav:
   - Home: index.md
   - GUIDE: GUIDE.md
+  - Partner Integration: partner-integration.md
+  - Scope Implementation: scope-implementation.md
 
 markdown_extensions:
   - admonition

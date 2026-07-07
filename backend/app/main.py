@@ -34,6 +34,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         try:
             await create_all_tables()
             logger.info("Database tables ensured")
+            if settings.SEED_DEMO_DATA:
+                from app.dev.seed import seed_demo_data
+
+                await seed_demo_data()
+                logger.info("Demo data ensured")
         except Exception as exc:
             logger.warning("Could not create tables on startup: %s", exc)
 

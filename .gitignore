@@ -96,6 +96,9 @@ frontend/node_modules/
 backend/__pycache__/
 backend/.venv/
 backend/venv/
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
 
 # ML artefacts — large binary files, do not commit
 ml/models/*.pkl
@@ -109,3 +112,4 @@ EduSight_Africa_Portfolio.pdf
 scripts/generate_portfolio_pdf.py
 
 _site/
+scope.md

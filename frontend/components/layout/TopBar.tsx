@@ -62,22 +62,22 @@ export function TopBar() {
   }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
+    <header className="m-2 mb-0 flex h-14 items-center justify-between rounded-[14px] border border-white/70 bg-white/80 px-3 shadow-sm backdrop-blur-2xl sm:px-5">
       {/* School name */}
       <div className="flex items-center gap-3">
-        <h2 className="text-base font-semibold text-text-primary">
+        <h2 className="text-sm font-semibold text-text-primary sm:text-base">
           Nairobi Primary School
         </h2>
         <span className="hidden sm:inline-block h-1 w-1 rounded-full bg-gray-300" />
         <span className="hidden sm:inline-block text-sm text-text-secondary">
-          Academic Year 2024–2025
+          Academic Year 2024-2025
         </span>
       </div>
 
       {/* Right side */}
       <div className="flex items-center gap-3">
         {/* Notification bell */}
-        <button className="relative rounded-lg p-2 text-text-secondary hover:bg-gray-100 transition-colors">
+        <button className="relative rounded-[8px] p-2 text-text-secondary transition-colors hover:bg-black/5">
           <Bell className="h-5 w-5" />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" />
         </button>
@@ -86,7 +86,7 @@ export function TopBar() {
         <div ref={langRef} className="relative">
           <button
             onClick={() => setLangOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 rounded-[8px] px-2 py-2 text-sm text-text-secondary transition-colors hover:bg-black/5 sm:px-3"
           >
             <Globe className="h-4 w-4" />
             <span className="hidden sm:block">
@@ -97,7 +97,7 @@ export function TopBar() {
           </button>
 
           {langOpen && (
-            <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-gray-200 bg-white shadow-lg py-1 overflow-hidden">
+            <div className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-[12px] border border-black/10 bg-white/95 py-1 shadow-lg">
               {LANGUAGES.map((lang) => (
                 <button
                   key={lang.code}
@@ -127,7 +127,7 @@ export function TopBar() {
         <div ref={userRef} className="relative">
           <button
             onClick={() => setUserOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 rounded-[9px] px-2 py-1.5 transition-colors hover:bg-black/5"
           >
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-xs">{getInitials(userName)}</AvatarFallback>
@@ -149,7 +149,7 @@ export function TopBar() {
           </button>
 
           {userOpen && (
-            <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-gray-200 bg-white shadow-lg py-1 overflow-hidden">
+            <div className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-[12px] border border-black/10 bg-white/95 py-1 shadow-lg">
               <div className="px-4 py-3 border-b border-gray-100">
                 <p className="text-sm font-semibold text-text-primary">{userName}</p>
                 <p className="text-xs text-text-secondary">

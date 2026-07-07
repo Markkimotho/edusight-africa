@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-label="EduSight Africa">
+  <rect width="192" height="192" rx="42" fill="#0071e3"/>
+  <path fill="#fff" d="M96 42 34 72l62 30 62-30-62-30Zm-42 50v30c0 15 19 28 42 28s42-13 42-28V92l-42 20-42-20Z"/>
+  <circle cx="150" cy="124" r="10" fill="#28a745"/>
+</svg>

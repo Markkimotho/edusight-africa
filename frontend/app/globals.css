@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,19 +10,19 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 155 44% 18%;
+    --primary: 210 100% 45%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 17 77% 60%;
+    --accent: 142 55% 38%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 155 44% 18%;
+    --ring: 210 100% 45%;
     --radius: 0.5rem;
   }
 }
@@ -35,7 +33,13 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply text-foreground font-sans;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(194,224,255,.95), transparent 34%),
+      radial-gradient(circle at 78% 6%, rgba(234,207,255,.78), transparent 30%),
+      radial-gradient(circle at 75% 86%, rgba(180,231,224,.62), transparent 38%),
+      linear-gradient(145deg, #dce8f5 0%, #e9e3ee 48%, #d9ebe7 100%);
+    background-attachment: fixed;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -70,11 +74,27 @@
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
+    background: linear-gradient(135deg, #0071E3 0%, #4E9CFF 100%);
   }
 
   .gradient-accent {
-    background: linear-gradient(135deg, #E76F51 0%, #F4A261 100%);
+    background: linear-gradient(135deg, #28A745 0%, #4FCB7A 100%);
+  }
+
+  .glass-panel {
+    border: 1px solid rgba(255, 255, 255, .68);
+    background: rgba(255, 255, 255, .78);
+    box-shadow: 0 20px 60px rgba(27, 39, 56, .14), 0 2px 10px rgba(27, 39, 56, .06);
+    backdrop-filter: saturate(150%) blur(28px);
+    -webkit-backdrop-filter: saturate(150%) blur(28px);
+  }
+
+  .eyebrow {
+    color: #8E8E93;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .11em;
+    text-transform: uppercase;
   }
 }
 

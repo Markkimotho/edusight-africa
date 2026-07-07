@@ -20,6 +20,18 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  return (
+    <React.Suspense fallback={<LoginPageFallback />}>
+      <LoginPageContent />
+    </React.Suspense>
+  );
+}
+
+function LoginPageFallback() {
+  return <div className="min-h-screen bg-white" />;
+}
+
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';

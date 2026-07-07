@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+coverage
+.env
+.env.local
+npm-debug.log*
+package-lock 2.json
+tsconfig.tsbuildinfo
+.DS_Store

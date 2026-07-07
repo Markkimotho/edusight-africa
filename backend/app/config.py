@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: Literal["development", "staging", "production", "test"] = "development"
     DEBUG: bool = True
+    SEED_DEMO_DATA: bool = False
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/edusight_africa"
@@ -33,6 +34,7 @@ class Settings(BaseSettings):
 
     # CORS
     ALLOWED_ORIGINS: list[str] = ["*"]
+    PARTNER_API_KEYS: str = ""
 
     # Pagination
     DEFAULT_PAGE_SIZE: int = 20
@@ -43,6 +45,12 @@ class Settings(BaseSettings):
     ML_SCALER_PATH: str = "ml/models/scaler.pkl"
     ML_METADATA_PATH: str = "ml/models/model_metadata.json"
     ML_ENABLE_TRAINED_MODEL: bool = False
+    ML_MIN_CONFIDENCE: float = 0.45
+    ML_HIGH_RECALL_MODE: bool = True
+
+    @property
+    def partner_api_key_list(self) -> list[str]:
+        return [item.strip() for item in self.PARTNER_API_KEYS.split(",") if item.strip()]
 
 
 @lru_cache()

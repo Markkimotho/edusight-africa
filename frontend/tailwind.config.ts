@@ -19,21 +19,21 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#1B4332',
-          light: '#2D6A4F',
+          DEFAULT: '#0071E3',
+          light: '#4E9CFF',
           foreground: '#FFFFFF',
         },
         accent: {
-          DEFAULT: '#E76F51',
-          light: '#F4A261',
+          DEFAULT: '#28A745',
+          light: '#4FCB7A',
           foreground: '#FFFFFF',
         },
-        surface: '#FEFAE0',
-        'text-primary': '#1A1A2E',
-        'text-secondary': '#6B7280',
-        success: '#059669',
-        warning: '#D97706',
-        danger: '#DC2626',
+        surface: '#F7F8FA',
+        'text-primary': '#1D1D1F',
+        'text-secondary': '#6E6E73',
+        success: '#28A745',
+        warning: '#C46B10',
+        danger: '#D92D20',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -61,7 +61,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Helvetica Neue', 'Arial', 'ui-sans-serif', 'system-ui'],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       borderRadius: {

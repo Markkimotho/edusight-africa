@@ -5,6 +5,8 @@ from app.models.prediction import Prediction, RiskLevel
 from app.models.observation import ParentObservation
 from app.models.intervention import Intervention, InterventionType, InterventionStatus
 from app.models.model_version import ModelVersion, ModelStatus
+from app.models.api_key import PartnerAPIKey
+from app.models.integration import PartnerStudentLink
 
 __all__ = [
     "User",
@@ -21,4 +23,6 @@ __all__ = [
     "InterventionStatus",
     "ModelVersion",
     "ModelStatus",
+    "PartnerAPIKey",
+    "PartnerStudentLink",
 ]

@@ -1,16 +1,26 @@
 import uuid
+import hashlib
+import secrets
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.config import settings
 from app.database import get_db
 from app.core.security import verify_token
+from app.models.api_key import PartnerAPIKey
 from app.models.user import User, UserRole
 
 bearer_scheme = HTTPBearer(auto_error=True)
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def hash_api_key(api_key: str) -> str:
+    return hashlib.sha256(api_key.encode("utf-8")).hexdigest()
 
 
 async def get_current_user(
@@ -68,3 +78,48 @@ def require_roles(*roles: UserRole):
 # Convenience aliases
 CurrentUser = Annotated[User, Depends(get_current_active_user)]
 DBSession = Annotated[AsyncSession, Depends(get_db)]
+
+
+async def get_partner_api_key(
+    db: DBSession,
+    raw_api_key: Annotated[str | None, Depends(api_key_header)] = None,
+) -> PartnerAPIKey | dict:
+    """
+    Authenticate partner integrations with X-API-Key.
+
+    Supports database-backed keys and bootstrap keys from PARTNER_API_KEYS for
+    first deployments where an admin UI has not created a key yet.
+    """
+    if not raw_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing X-API-Key header",
+        )
+
+    for configured_key in settings.partner_api_key_list:
+        if secrets.compare_digest(raw_api_key, configured_key):
+            return {
+                "name": "configured-partner-key",
+                "organization_name": "configured",
+                "school_id": None,
+                "scopes": "predict:write,predict:read,model:read",
+            }
+
+    key_hash = hash_api_key(raw_api_key)
+    result = await db.execute(
+        select(PartnerAPIKey).where(
+            PartnerAPIKey.key_hash == key_hash,
+            PartnerAPIKey.is_active.is_(True),
+        )
+    )
+    partner_key = result.scalar_one_or_none()
+    if partner_key is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
+    partner_key.last_used_at = datetime.utcnow()
+    return partner_key
+
+
+PartnerAuth = Annotated[PartnerAPIKey | dict, Depends(get_partner_api_key)]
