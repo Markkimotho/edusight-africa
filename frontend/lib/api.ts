@@ -139,14 +139,20 @@ export interface GetStudentsParams {
 export async function getStudents(
   params: GetStudentsParams = {}
 ): Promise<PaginatedResponse<StudentWithStats>> {
-  const response = await apiClient.get<PaginatedResponse<StudentWithStats>>('/students', {
-    params,
+  const response = await apiClient.get('/students/', {
+    params: {
+      page: params.page,
+      per_page: params.limit,
+      grade_level: parseGradeLevel(params.grade),
+      risk_level: params.riskLevel,
+    },
   });
-  return response.data;
+  return mapPaginated(response.data, mapStudent);
 }
 
 export async function getStudent(id: string): Promise<StudentWithStats> {
-  return request<StudentWithStats>({ method: 'GET', url: `/students/${id}` });
+  const response = await apiClient.get(`/students/${id}`);
+  return mapStudent(response.data);
 }
 
 export async function getStudentAssessments(
@@ -182,6 +188,50 @@ function mapPrediction(item: any): Prediction | undefined {
     recommendedInterventions: item.recommended_interventions || item.recommendedInterventions || [],
     modelVersion: item.model_version || item.modelVersion || 'unknown',
     createdAt: item.created_at || item.createdAt || new Date().toISOString(),
+  };
+}
+
+function parseGradeLevel(grade?: string): number | undefined {
+  if (!grade) return undefined;
+  const match = grade.match(/\d+/);
+  return match ? Number(match[0]) : undefined;
+}
+
+function mapStudent(item: any): StudentWithStats {
+  const latestAssessment = item.latest_assessment || item.latestAssessment;
+  const latestPrediction = item.latest_prediction || item.latestPrediction || latestAssessment?.prediction;
+  const mathScore = latestAssessment?.math_score ?? latestAssessment?.mathScore;
+  const readingScore = latestAssessment?.reading_score ?? latestAssessment?.readingScore;
+  const writingScore = latestAssessment?.writing_score ?? latestAssessment?.writingScore;
+  const assessedAt =
+    latestAssessment?.assessment_date ||
+    latestAssessment?.assessmentDate ||
+    item.last_assessment_date ||
+    item.lastAssessmentDate;
+
+  return {
+    id: item.id,
+    name: item.name || item.full_name || item.fullName || 'Unnamed student',
+    grade: item.grade || (item.grade_level ? `Grade ${item.grade_level}` : item.gradeLevel ? `Grade ${item.gradeLevel}` : ''),
+    enrollmentDate: item.enrollment_date || item.enrollmentDate || new Date().toISOString(),
+    guardianName: item.guardian_name || item.guardianName,
+    guardianContact: item.guardian_contact || item.guardianContact,
+    schoolId: item.school_id || item.schoolId || '',
+    teacherId: item.teacher_id || item.teacherId,
+    currentRiskLevel: latestPrediction?.risk_level || latestPrediction?.riskLevel || item.current_risk_level || item.currentRiskLevel,
+    lastAssessmentDate: assessedAt,
+    totalAssessments: item.total_assessments ?? item.totalAssessments ?? (latestAssessment ? 1 : 0),
+    averageMathScore: item.average_math_score ?? item.averageMathScore ?? mathScore,
+    averageReadingScore: item.average_reading_score ?? item.averageReadingScore ?? readingScore,
+    averageWritingScore: item.average_writing_score ?? item.averageWritingScore ?? writingScore,
+    latestRiskProbability:
+      latestPrediction?.risk_probability ??
+      latestPrediction?.riskProbability ??
+      item.latest_risk_probability ??
+      item.latestRiskProbability,
+    trend: item.trend || 'stable',
+    createdAt: item.created_at || item.createdAt || new Date().toISOString(),
+    updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
   };
 }
 

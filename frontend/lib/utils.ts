@@ -98,8 +98,9 @@ export function truncate(str: string, maxLength: number): string {
   return str.slice(0, maxLength) + '...';
 }
 
-export function getInitials(name: string): string {
-  return name
+export function getInitials(name?: string | null): string {
+  const safeName = name?.trim() || 'Student';
+  return safeName
     .split(' ')
     .map((n) => n[0])
     .join('')
